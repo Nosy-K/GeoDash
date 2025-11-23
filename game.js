@@ -55,6 +55,17 @@ class Player {
         this.velocityY += this.gravity;
         this.y += this.velocityY;
 
+        // Check collision with platforms
+        let onPlatform = false;
+        platforms.forEach(platform => {
+            if (this.checkPlatformCollision(platform)) {
+                this.y = platform.y - this.height;
+                this.velocityY = 0;
+                onPlatform = true;
+                this.isJumping = false;
+            }
+        });
+
         // Check collision with ground
         const groundLevel = canvas.height - 100;
         if (this.y + this.height >= groundLevel) {
@@ -62,25 +73,8 @@ class Player {
             this.velocityY = 0;
             this.onGround = true;
             this.isJumping = false;
-        }
-
-        // Check collision with platforms
-        this.onGround = false;
-        platforms.forEach(platform => {
-            if (this.checkPlatformCollision(platform)) {
-                this.y = platform.y - this.height;
-                this.velocityY = 0;
-                this.onGround = true;
-                this.isJumping = false;
-            }
-        });
-
-        // If not on any platform, check ground again
-        if (this.y + this.height >= groundLevel) {
-            this.y = groundLevel - this.height;
-            this.velocityY = 0;
-            this.onGround = true;
-            this.isJumping = false;
+        } else {
+            this.onGround = onPlatform;
         }
     }
 
@@ -253,31 +247,32 @@ function gameLoop() {
     player.draw();
     
     // Update and draw spikes
-    spikes.forEach((spike, index) => {
-        spike.update();
-        spike.draw();
+    for (let i = spikes.length - 1; i >= 0; i--) {
+        spikes[i].update();
+        spikes[i].draw();
         
         // Remove off-screen spikes
-        if (spike.x + spike.width < 0) {
-            spikes.splice(index, 1);
+        if (spikes[i].x + spikes[i].width < 0) {
+            spikes.splice(i, 1);
+            continue;
         }
         
         // Check collision
-        if (player.checkCollision(spike)) {
+        if (player.checkCollision(spikes[i])) {
             gameOver();
         }
-    });
+    }
     
     // Update and draw platforms
-    platforms.forEach((platform, index) => {
-        platform.update();
-        platform.draw();
+    for (let i = platforms.length - 1; i >= 0; i--) {
+        platforms[i].update();
+        platforms[i].draw();
         
         // Remove off-screen platforms
-        if (platform.x + platform.width < 0) {
-            platforms.splice(index, 1);
+        if (platforms[i].x + platforms[i].width < 0) {
+            platforms.splice(i, 1);
         }
-    });
+    }
     
     // Update score
     updateScore();
